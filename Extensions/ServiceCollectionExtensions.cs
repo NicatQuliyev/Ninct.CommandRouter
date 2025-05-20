@@ -38,7 +38,7 @@ public static class ServiceCollectionExtensions
 
     /// <summary>
     /// Registers all request handlers, pipeline behaviors, and notification handlers found in the specified assemblies.
-    /// Also registers the <see cref="CommandPusher"/> and <see cref="NotificationDispatcher"/> services.
+    /// Also registers the <see cref="ICommandPusher"/>, <see cref="INotificationDispatcher"/> and <see cref="ICommandBus"/>> services.
     /// </summary>
     /// <param name="services">The service collection to add handlers to.</param>
     /// <param name="assemblies">The assemblies to scan for handlers.</param>
@@ -80,8 +80,9 @@ public static class ServiceCollectionExtensions
             services.AddTransient(handler.Interface, handler.Implementation);
         }
         
-        services.AddTransient<CommandPusher>();
-        services.AddTransient<NotificationDispatcher>();
+        services.AddTransient<ICommandPusher, CommandPusher>();
+        services.AddTransient<INotificationDispatcher, NotificationDispatcher>();
+        services.AddTransient<CommandBus>();
 
         return services;
     }
