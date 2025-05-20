@@ -20,7 +20,7 @@
 Add the project to your solution as a reference or include it via NuGet (coming soon).
 
 ```bash
-dotnet add package CommandRouter
+dotnet add package Ninct.CommandRouter
 ```
 
 ## 🚀 Getting Started
