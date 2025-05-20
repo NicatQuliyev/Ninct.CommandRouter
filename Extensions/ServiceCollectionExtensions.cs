@@ -5,8 +5,17 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CommandRouter.Extensions;
 
+/// <summary>
+/// Extension methods to register CQRS handlers, behaviors, and notification handlers into the DI container.
+/// </summary>
 public static class ServiceCollectionExtensions
 {
+    /// <summary>
+    /// Scans all loaded assemblies in the current app domain and registers all request handlers,
+    /// pipeline behaviors, and notification handlers found.
+    /// </summary>
+    /// <param name="services">The service collection to add handlers to.</param>
+    /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddHandlersFromAppDomain(this IServiceCollection services)
     {
         var assemblies = AppDomain.CurrentDomain.GetAssemblies()
@@ -15,11 +24,25 @@ public static class ServiceCollectionExtensions
         
         return services.AddHandlers(assemblies);
     }
+    
+    /// <summary>
+    /// Registers all request handlers, pipeline behaviors, and notification handlers found in the specified assemblies.
+    /// </summary>
+    /// <param name="services">The service collection to add handlers to.</param>
+    /// <param name="assemblies">The assemblies to scan for handlers.</param>
+    /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddHandlersFromAssemblies(this IServiceCollection services, params Assembly[] assemblies)
     {
         return services.AddHandlers(assemblies);
     }
 
+    /// <summary>
+    /// Registers all request handlers, pipeline behaviors, and notification handlers found in the specified assemblies.
+    /// Also registers the <see cref="CommandPusher"/> and <see cref="NotificationDispatcher"/> services.
+    /// </summary>
+    /// <param name="services">The service collection to add handlers to.</param>
+    /// <param name="assemblies">The assemblies to scan for handlers.</param>
+    /// <returns>The updated service collection.</returns>
     private static IServiceCollection AddHandlers(this IServiceCollection services, Assembly[] assemblies)
     {
         var allTypes = assemblies
@@ -57,8 +80,8 @@ public static class ServiceCollectionExtensions
             services.AddTransient(handler.Interface, handler.Implementation);
         }
         
-        services.AddSingleton<CommandPusher>();
-        services.AddSingleton<NotificationDispatcher>();
+        services.AddTransient<CommandPusher>();
+        services.AddTransient<NotificationDispatcher>();
 
         return services;
     }
