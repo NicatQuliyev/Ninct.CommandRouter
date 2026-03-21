@@ -7,7 +7,7 @@ namespace CommandRouter.Core;
 /// Responsible for publishing notifications to all registered notification handlers.
 /// </summary>
 /// <param name="serviceProvider">The service provider used to resolve notification handlers.</param>
-public class NotificationDispatcher(IServiceProvider serviceProvider)
+public class NotificationDispatcher(IServiceProvider serviceProvider): INotificationDispatcher
 {
     /// <summary>
     /// Publishes a notification to all registered <see cref="INotificationHandler{TNotification}"/> instances.

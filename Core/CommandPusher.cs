@@ -9,7 +9,7 @@ namespace CommandRouter.Core;
 /// from the DI container, then executing them in order.
 /// </summary>
 /// <param name="serviceProvider">The service provider used to resolve handlers and pipeline behaviors.</param>
-public class CommandPusher(IServiceProvider serviceProvider)
+public class CommandPusher(IServiceProvider serviceProvider): ICommandPusher
 {
     /// <summary>
     /// Sends a request through the pipeline behaviors to the corresponding handler and returns the handler's response.
