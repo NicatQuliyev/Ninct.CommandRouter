@@ -21,10 +21,10 @@ public static class ServiceCollectionExtensions
         var assemblies = AppDomain.CurrentDomain.GetAssemblies()
             .Where(a => !a.IsDynamic && !string.IsNullOrEmpty(a.Location))
             .ToArray();
-        
+
         return services.AddHandlers(assemblies);
     }
-    
+
     /// <summary>
     /// Registers all request handlers, pipeline behaviors, and notification handlers found in the specified assemblies.
     /// </summary>
@@ -49,37 +49,50 @@ public static class ServiceCollectionExtensions
             .SelectMany(a => a.GetTypes())
             .Where(t => !t.IsAbstract && !t.IsInterface)
             .ToArray();
-        
+
+        // 1. Register Request Handlers
         var requestHandlers = allTypes
             .SelectMany(t => t.GetInterfaces()
                 .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRequestHandler<,>))
                 .Select(i => new { Interface = i, Implementation = t }));
 
+        foreach (var handler in requestHandlers)
+        {
+            services.AddTransient(handler.Interface, handler.Implementation);
+        }
+
+        // 2. Register Pipeline Behaviors (FIXED)
         var behaviours = allTypes
             .SelectMany(t => t.GetInterfaces()
                 .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IPipelineBehavior<,>))
                 .Select(i => new { Interface = i, Implementation = t }));
 
+        foreach (var behaviour in behaviours)
+        {
+            if (behaviour.Implementation.IsGenericTypeDefinition)
+            {
+                // If it's an open generic (like ValidationBehavior<T,R>), 
+                // register the definition so the DI container handles constraints at runtime.
+                services.AddTransient(typeof(IPipelineBehavior<,>), behaviour.Implementation);
+            }
+            else
+            {
+                // If it's a closed class (e.g. LoggingBehavior : IPipelineBehavior<MyReq, MyRes>)
+                services.AddTransient(behaviour.Interface, behaviour.Implementation);
+            }
+        }
+
+        // 3. Register Notification Handlers
         var notificationHandlers = allTypes
             .SelectMany(t => t.GetInterfaces()
                 .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(INotificationHandler<>))
                 .Select(i => new { Interface = i, Implementation = t }));
-        
-        foreach (var handler in requestHandlers)
-        {
-            services.AddTransient(handler.Interface, handler.Implementation);
-        }
-        
-        foreach (var behaviour in behaviours)
-        {
-            services.AddTransient(behaviour.Interface, behaviour.Implementation);
-        }
 
         foreach (var handler in notificationHandlers)
         {
             services.AddTransient(handler.Interface, handler.Implementation);
         }
-        
+
         services.AddTransient<ICommandPusher, CommandPusher>();
         services.AddTransient<INotificationDispatcher, NotificationDispatcher>();
         services.AddTransient<CommandBus>();
